@@ -25,6 +25,7 @@ function App() {
 
   const [blocks, setBlocks] = React.useState(initialBlocks())
   const [bwBlocks, setBWBlocks] = React.useState(initialBlocks())
+  const [imgBlocks, setIMGBlocks] = React.useState([])
 
   const handleChangeFile = () => {
     
@@ -134,6 +135,7 @@ function App() {
 
     let _blocks = []
     let gray_blocks = []
+    let img_blocks = []
 
     let n = 0
     for(let i = 0; i < iterate_count; i++) {
@@ -148,7 +150,12 @@ function App() {
 
         //_blocks.push(`rgb(${cunt[0].r}, ${cunt[0].g}, ${cunt[0].b})`)
 
-        //const gs = (cunt[0].r + cunt[0].g + cunt[0].b)/3
+        let gs = (cunt[0].r + cunt[0].g + cunt[0].b)/3
+        const delta = Math.round(255 / 8)
+        let gsIndex = Math.round(gs / delta)
+
+        img_blocks.push(gsIndex)
+
         const rgb2 = getGrayScale({ r: cunt[0].r, g: cunt[0].g, b: cunt[0].b })
 
         /*let red = cunt[0].r
@@ -182,6 +189,7 @@ function App() {
 
     setBlocks(_blocks)
     setBWBlocks(gray_blocks)
+    setIMGBlocks(img_blocks)
     
     handleNext()
 
@@ -218,7 +226,7 @@ function App() {
             <img ref={imageResizedRef} className={classes.resizePreviewImg} src="" />
           </div>
           <div className={classes.action}>
-          <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
+            <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
             <button className={classes.button} onClick={handleProc}>Next &#8674;</button>
           </div>
         </div>
@@ -239,7 +247,7 @@ function App() {
             </div>
           </div>
           <div className={classes.action}>
-          <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
+            <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
             <button className={classes.button} onClick={handleNext}>Next &#8674;</button>
           </div>
         </div>
@@ -260,8 +268,34 @@ function App() {
             </div>
           </div>
           <div className={classes.action}>
-          <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
-            <button className={classes.button} onClick={handleProc2}>Next &#8674;</button>
+            <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
+            <button className={classes.button} onClick={handleNext}>Next &#8674;</button>
+          </div>
+        </div>
+
+        <div style={{display: step === 4 ? 'block' : 'none'}} className={classes.sourcePreviewContainer2}>
+          <label className={classes.label}>Step 5: Apply Mosaic</label>
+          <div className={classes.resizePreview2}>
+            <div className={classes.procImgContainer2}>
+            {
+              blocks.map((item, index) => {
+
+                //console.log("gs", imgBlocks[index])
+
+                return (
+                  <div key={index} style={{
+                    backgroundColor: item,
+                    backgroundImage: `url("./image${imgBlocks[index]}.jpeg")`,
+                    backgroundSize: 'cover',
+                    backgroundBlendMode: 'overlay',
+                  }} className={classes.block2} />
+                )
+              })
+            }
+            </div>
+          </div>
+          <div className={classes.action}>
+            <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
           </div>
         </div>
 
