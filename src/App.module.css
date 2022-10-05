@@ -42,10 +42,51 @@
     outline: 4px auto -webkit-focus-ring-color;
 }
 
+.action {
+    display: flex;
+    justify-content: space-between;
+}
+
 .sourcePreview {
+    border: 1px solid #e6e6e6;
     position: relative;
     width: 300px;
     height: 300px;
+    box-sizing: border-box;
+    object-fit: cover;
+    margin-bottom: 0.5em;
+}
+.resizePreview {
+    border: 1px solid #e6e6e6;
+    position: relative;
+    width: 300px;
+    height: 300px;
+    box-sizing: border-box;
+    margin-bottom: 0.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.procImgContainer {
+    position: relative;
+    width: 128px;
+    height: 128px;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+}
+.block {
+    position: relative;
+    width: 4px;
+    height: 4px;
+    box-sizing: border-box;
+}
+
+.resizePreviewImg {
+    position: relative;
+    width: 128px;
+    height: 128px;
     box-sizing: border-box;
 }
 
