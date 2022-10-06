@@ -23,6 +23,7 @@ function App() {
   const [grayScaleBlocks, setGrayScaleBlocks] = React.useState([])
   const [normalBlocks, setNormalBlocks] = React.useState([])
 
+  const [imageLoaded, setImageLoaded] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
   const [step, setStep] = React.useState(0)
 
@@ -87,6 +88,7 @@ function App() {
         }
         
         imageRef.current.src = canvas.toDataURL()
+        setImageLoaded(true)
 
       }
     })(file)
@@ -213,6 +215,19 @@ function App() {
     setStep(cur => cur - 1)
   }
 
+  const handleRestart = () => {
+
+    imageRef.current.src = null
+
+    setStep(0)
+
+    setImageLoaded(false)
+    setRGBBlocks([])
+    setGrayScaleBlocks([])
+    setNormalBlocks([])
+    
+  }
+
   return (
     <div className={classes.container}>
 
@@ -225,7 +240,7 @@ function App() {
         </div>
         <div className={classes.action}>
           <button onClick={handleLoad} className={classes.button}>Load Image...</button>
-          <button onClick={handleDominantColor} className={classes.button}>Get Dominant Color &#8674;</button>
+          <button disabled={!imageLoaded ? true : false} onClick={handleDominantColor} className={classes.button}>Get Dominant Color &#8674;</button>
         </div>
         {
           loading &&
@@ -341,6 +356,7 @@ function App() {
         </div>
         <div className={classes.action}>
           <button onClick={handlePrevious} className={classes.button}>&#8672; Previous</button>
+          <button onClick={handleRestart} className={classes.button}>Restart</button>
         </div>
         {
           loading &&
