@@ -1,6 +1,5 @@
 import React from 'react'
 import classes from './App.module.css'
-
 import { 
   loadImage,
   getRGB,
@@ -12,24 +11,30 @@ import {
   convertToHex,
 } from './lib/utils'
 
-const initialBlocks = () => Array(64).fill('#000')
+const BLOCK_SIZE = 8
+const IMAGE_SIZE = 512
 
 function App() {
-  
+
   const fileRef = React.useRef()
-  const imageSrcRef = React.useRef()
-  const imageResizedRef = React.useRef()
+  const imageRef = React.useRef()
 
+  const [rgbBlocks, setRGBBlocks] = React.useState([])
+  const [grayScaleBlocks, setGrayScaleBlocks] = React.useState([])
+  const [normalBlocks, setNormalBlocks] = React.useState([])
+
+  const [loading, setLoading] = React.useState(false)
   const [step, setStep] = React.useState(0)
-  const [mode, setMode] = React.useState(0)
 
-  const [blocks, setBlocks] = React.useState(initialBlocks())
-  const [bwBlocks, setBWBlocks] = React.useState(initialBlocks())
-  const [imgBlocks, setIMGBlocks] = React.useState([])
+  const handleLoad = () => {
 
-  const handleChangeFile = () => {
-    
-    const selFile = fileRef.current.files[0]
+    fileRef.current.click()
+
+  }
+
+  const handleFile = () => {
+
+    const file = fileRef.current.files[0]
 
     const reader = new FileReader()
 
@@ -37,170 +42,169 @@ function App() {
 
       return async function(e) {
 
-        console.log("load image")
-
         const rawImg = await loadImage(e.target.result)
 
-            
-        var OPTIMIZED_SIZE = 128;
-                        
-        var _src_width = rawImg.naturalWidth;
-        var _src_height = rawImg.naturalHeight;
+        const image_width = rawImg.naturalWidth;
+        const image_height = rawImg.naturalHeight;
 
-        var _canvas = document.createElement("canvas");
-        _canvas.width = OPTIMIZED_SIZE;
-        _canvas.height = OPTIMIZED_SIZE;
-            
-        var _width = _src_width;
-        var _height = _src_height;
+        let canvas = document.createElement('canvas');
+        canvas.width = IMAGE_SIZE;
+        canvas.height = IMAGE_SIZE;
 
-        var _mode = 0;
+        let width = image_width;
+        let height = image_height;
 
-        if(_src_width > _src_height) {
-            
-          _width = Math.round(OPTIMIZED_SIZE * (_src_width/_src_height));
-          _height = OPTIMIZED_SIZE;
-          
-          _mode = 1;
+        let mode = image_width > image_height ? 1 : image_width < image_height ? 2 : 0;
 
+        if(image_width > image_height) {
+                
+            width = Math.round(IMAGE_SIZE * (image_width/image_height));
+            height = IMAGE_SIZE;
+              
         } else {
 
-          if(_src_width < _src_height){
-            _mode = 2;
-          }
-
-          _height = Math.round(OPTIMIZED_SIZE * (_src_height/_src_width));
-          _width = OPTIMIZED_SIZE;
+            height = Math.round(IMAGE_SIZE * (image_height/image_width));
+            width = IMAGE_SIZE;
 
         }
 
-        var _ctx = _canvas.getContext("2d");
+        var ctx = canvas.getContext("2d");
 
-        if(_mode === 1) {
+        if(mode === 1) {
             
-          var _x = Math.round((_src_width - _src_height)/2);
-          _ctx.drawImage(rawImg, _x, 0, _src_height, _src_height, 0, 0, _height, _height);
-      
-        } else if(_mode === 2) {
+            var x = Math.round((image_width - image_height)/2);
+            ctx.drawImage(rawImg, x, 0, image_height, image_height, 0, 0, height, height);
+
+        } else if(mode === 2) {
             
-          var _y = Math.round((_src_height - _src_width)/2);
-          _ctx.drawImage(rawImg, 0, _y, _src_width, _src_width, 0, 0, _width, _width);
-      
+            var y = Math.round((image_height - image_width)/2);
+            ctx.drawImage(rawImg, 0, y, image_width, image_width, 0, 0, width, width);
+
         } else {
 
-          _ctx.drawImage(rawImg, 0, 0, _src_width, _src_height, 0, 0, _width, _height);
+            ctx.drawImage(rawImg, 0, 0, image_width, image_height, 0, 0, width, height);
+
+        }
         
-        }
-
-        imageResizedRef.current.src = _canvas.toDataURL()
-        imageSrcRef.current.src = rawImg.src
+        imageRef.current.src = canvas.toDataURL()
 
       }
+    })(file)
 
-    })(selFile)
-    
-    reader.readAsDataURL(selFile)
-    
-  }
-
-  const handleLoadImage = (_mode) => () => {
-  
-    setMode(_mode)
-    fileRef.current.click()
+    reader.readAsDataURL(file)
 
   }
 
-  const handleProc = () => {
-
-    var OPTIMIZED_SIZE = 128;
+  const getDominantColor = () => {
     
-    //var _src_width = imageResizedRef.current.naturalWidth;
-    //var _src_height = imageResizedRef.current.naturalHeight;
+    let block_size = BLOCK_SIZE
+    let iterate_count = IMAGE_SIZE / block_size
 
-    var _canvas = document.createElement("canvas");
-    _canvas.width = OPTIMIZED_SIZE;
-    _canvas.height = OPTIMIZED_SIZE;
+    const canvas = document.createElement('canvas')
+    canvas.width = block_size
+    canvas.height = block_size
 
-    var _ctx = _canvas.getContext("2d");
-    _ctx.drawImage(imageResizedRef.current, 0, 0, OPTIMIZED_SIZE, OPTIMIZED_SIZE, 0, 0, OPTIMIZED_SIZE, OPTIMIZED_SIZE);
-    
-    let block_size = 4
-    let iterate_count = OPTIMIZED_SIZE / block_size
+    const ctx = canvas.getContext('2d')
 
-    var test_canvas = document.createElement("canvas")
-    test_canvas.width = block_size
-    test_canvas.height = block_size
-
-    var test_ctx = test_canvas.getContext('2d')
-
-    let _blocks = []
-    let gray_blocks = []
-    let img_blocks = []
-
+    let blocks = []
     let n = 0
+
     for(let i = 0; i < iterate_count; i++) {
-        
+      
       for(let k = 0; k < iterate_count; k++) {
-
-        test_ctx.drawImage(_canvas, k*block_size, i*block_size, block_size, block_size, 0, 0, block_size, block_size);
-
-        const data = test_ctx.getImageData(0, 0, block_size, block_size)
-        const rgbData = getRGB(data.data)
-        const cunt = quantization(rgbData, 4)
-
-        //_blocks.push(`rgb(${cunt[0].r}, ${cunt[0].g}, ${cunt[0].b})`)
-
-        let gs = (cunt[0].r + cunt[0].g + cunt[0].b)/3
-        const delta = Math.round(255 / 8)
-        let gsIndex = Math.round(gs / delta)
-
-        img_blocks.push(gsIndex)
-
-        const rgb2 = getGrayScale({ r: cunt[0].r, g: cunt[0].g, b: cunt[0].b })
-
-        /*let red = cunt[0].r
-        let green = cunt[0].g
-        let blue = cunt[0].b
-                        
-        const delta = Math.round(255 / 5)
-
-        red = 51 * Math.round(red / delta)
-        green = 51 * Math.round(green / delta)
-        blue = 51 * Math.round(blue / delta)
-        */
-
-        const rgb1 = { r: cunt[0].r, g: cunt[0].g, b: cunt[0].b }
-        //const rgb2 = convertToHex({ r: cunt[0].r, g: cunt[0].g, b: cunt[0].b })
         
-        /*const rgb2 = convertToHex({ 
-            r: red, 
-            g: green, 
-            b: blue 
-        })*/
+        ctx.drawImage(imageRef.current, k*block_size, i*block_size, block_size, block_size, 0, 0, block_size, block_size);
 
-        _blocks.push(`rgb(${rgb1.r}, ${rgb1.g}, ${rgb1.b})`)
-        gray_blocks.push(`rgb(${rgb2.r}, ${rgb2.g}, ${rgb2.b})`)
-        //_blocks.push(rgb2)
-        
+        const pixelData = ctx.getImageData(0, 0, block_size, block_size)
+        const rgbData = getRGB(pixelData.data)
+        const color = quantization(rgbData, 4)
+
+        blocks.push(color[0])
+
         n++
 
       }
+
     }
 
-    setBlocks(_blocks)
-    setBWBlocks(gray_blocks)
-    setIMGBlocks(img_blocks)
+    setRGBBlocks(blocks)
+
+    nextStep()
+
+  }
+
+  const getGrayscale = () => {
+
+    const blocks = rgbBlocks.map(item => {
+
+      const gs = (item.r + item.g + item.b)/3
+
+      return gs
+
+    })
+
+    setGrayScaleBlocks(blocks)
     
-    handleNext()
+    nextStep()
 
   }
 
-  const handleProc2 = () => {
-    //
+  const getNormalize = () => {
+
+    const delta = 255 / 8
+
+    const blocks = grayScaleBlocks.map(item => {
+
+      const level = Math.round(item / delta)
+      const gs = delta * level
+
+      return {
+        index: level,
+        value: gs,
+      }
+
+    })
+
+    setNormalBlocks(blocks)
+    
+    nextStep()
+
   }
 
-  const handleNext = () => {
+  const handleDominantColor = () => {
+
+    setLoading(true)
+    
+    setTimeout(getDominantColor, 100)
+
+  }
+
+  const handleGrayscale = () => {
+    
+    setLoading(true)
+
+    setTimeout(getGrayscale, 100)
+
+  }
+
+  const handleNormalize = () => {
+
+    setLoading(true)
+
+    setTimeout(getNormalize, 100)
+
+  }
+
+  const handleOutput = () => {
+
+    nextStep()
+
+  }
+
+  const nextStep = () => {
+
     setStep(cur => cur + 1)
+    setLoading(false)
   }
 
   const handlePrevious = () => {
@@ -209,105 +213,148 @@ function App() {
 
   return (
     <div className={classes.container}>
-      <div className={classes.inner}>
 
-        <div style={{display: step === 0 ? 'block' : 'none'}} className={classes.sourcePreviewContainer}>
-          <label className={classes.label}>Step 1: Load Image</label>
-          <img ref={imageSrcRef} className={classes.sourcePreview} src="" />
-          <div className={classes.action}>
-            <button onClick={handleLoadImage(0)} className={classes.button}>Browse...</button>
-            <button className={classes.button} onClick={handleNext}>Next &#8674;</button>
-          </div>
+      <div style={{
+        display: step === 0 ? 'block' : 'none'
+      }} className={classes.panel}>
+        <label><strong>Step 1</strong> Load image from file</label>
+        <div className={classes.innerPanel}>
+          <img ref={imageRef} className={classes.imagePreview} src="" />
         </div>
-
-        <div style={{display: step === 1 ? 'block' : 'none'}} className={classes.sourcePreviewContainer}>
-          <label className={classes.label}>Step 2: Resize Image</label>
-          <div className={classes.resizePreview}>
-            <img ref={imageResizedRef} className={classes.resizePreviewImg} src="" />
-          </div>
-          <div className={classes.action}>
-            <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
-            <button className={classes.button} onClick={handleProc}>Next &#8674;</button>
-          </div>
+        <div className={classes.action}>
+          <button onClick={handleLoad} className={classes.button}>Load Image...</button>
+          <button onClick={handleDominantColor} className={classes.button}>Get Dominant Color &#8674;</button>
         </div>
-
-        <div style={{display: step === 2 ? 'block' : 'none'}} className={classes.sourcePreviewContainer}>
-          <label className={classes.label}>Step 3: Process Image</label>
-          <div className={classes.resizePreview}>
-            <div className={classes.procImgContainer}>
-            {
-              blocks.map((item, index) => {
-                return (
-                  <div key={index} style={{
-                    backgroundColor: item,
-                  }} className={classes.block} />
-                )
-              })
-            }
-            </div>
-          </div>
-          <div className={classes.action}>
-            <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
-            <button className={classes.button} onClick={handleNext}>Next &#8674;</button>
-          </div>
-        </div>
-
-        <div style={{display: step === 3 ? 'block' : 'none'}} className={classes.sourcePreviewContainer}>
-          <label className={classes.label}>Step 4: Get Grayscale</label>
-          <div className={classes.resizePreview}>
-            <div className={classes.procImgContainer}>
-            {
-              bwBlocks.map((item, index) => {
-                return (
-                  <div key={index} style={{
-                    backgroundColor: item,
-                  }} className={classes.block} />
-                )
-              })
-            }
-            </div>
-          </div>
-          <div className={classes.action}>
-            <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
-            <button className={classes.button} onClick={handleNext}>Next &#8674;</button>
-          </div>
-        </div>
-
-        <div style={{display: step === 4 ? 'block' : 'none'}} className={classes.sourcePreviewContainer2}>
-          <label className={classes.label}>Step 5: Apply Mosaic</label>
-          <div className={classes.resizePreview2}>
-            <div className={classes.procImgContainer2}>
-            {
-              blocks.map((item, index) => {
-
-                //console.log("gs", imgBlocks[index])
-
-                return (
-                  <div key={index} style={{
-                    backgroundColor: item,
-                    backgroundImage: `url("./image${imgBlocks[index]}.jpeg")`,
-                    backgroundSize: 'cover',
-                    backgroundBlendMode: 'overlay',
-                  }} className={classes.block2} />
-                )
-              })
-            }
-            </div>
-          </div>
-          <div className={classes.action}>
-            <button className={classes.button} onClick={handlePrevious}>&#8672; Previous</button>
-          </div>
-        </div>
-
+        {
+          loading &&
+          <div className={classes.loader}><span>Please wait...</span></div>
+        }
       </div>
+
+      <div style={{
+        display: step === 1 ? 'block' : 'none'
+      }} className={classes.panel}>
+        <label><strong>Step 2</strong> Dominant Color</label>
+        <div className={classes.blockPanel}>
+        {
+          rgbBlocks.length > 0 && rgbBlocks.map((item, index) => {
+            const rgbColor = `rgb(${item.r}, ${item.g}, ${item.b})`
+            return (
+              <div key={index} style={{
+                backgroundColor: rgbColor || '#000',
+                width: BLOCK_SIZE,
+                height: BLOCK_SIZE,
+              }} className={classes.block} />
+            )
+          })
+        }
+        </div>
+        <div className={classes.action}>
+          <button onClick={handlePrevious} className={classes.button}>&#8672; Previous</button>
+          <button onClick={handleGrayscale} className={classes.button}>Get Grayscale &#8674;</button>
+        </div>
+        {
+          loading &&
+          <div className={classes.loader}><span>Please wait...</span></div>
+        }
+      </div>
+
+      <div style={{
+        display: step === 2 ? 'block' : 'none'
+      }} className={classes.panel}>
+        <label><strong>Step 3</strong> Grayscale</label>
+        <div className={classes.blockPanel}>
+        {
+          grayScaleBlocks.length > 0 && grayScaleBlocks.map((item, index) => {
+            const color = `rgb(${item}, ${item}, ${item})`
+            return (
+              <div key={index} style={{
+                backgroundColor: color || '#000',
+                width: BLOCK_SIZE,
+                height: BLOCK_SIZE,
+              }} className={classes.block} />
+            )
+          })
+        }
+        </div>
+        <div className={classes.action}>
+          <button onClick={handlePrevious} className={classes.button}>&#8672; Previous</button>
+          <button onClick={handleNormalize} className={classes.button}>Normalize &#8674;</button>
+        </div>
+        {
+          loading &&
+          <div className={classes.loader}><span>Please wait...</span></div>
+        }
+      </div>
+
+      <div style={{
+        display: step === 3 ? 'block' : 'none'
+      }} className={classes.panel}>
+        <label><strong>Step 4</strong> Normalize</label>
+        <div className={classes.blockPanel}>
+        {
+          normalBlocks.length > 0 && normalBlocks.map((item, index) => {
+            const color = `rgb(${item.value}, ${item.value}, ${item.value})`
+            return (
+              <div key={index} style={{
+                backgroundColor: color || '#000',
+                width: BLOCK_SIZE,
+                height: BLOCK_SIZE,
+              }} className={classes.block} />
+            )
+          })
+        }
+        </div>
+        <div className={classes.action}>
+          <button onClick={handlePrevious} className={classes.button}>&#8672; Previous</button>
+          <button onClick={handleOutput} className={classes.button}>Show Mosaic &#8674;</button>
+        </div>
+        {
+          loading &&
+          <div className={classes.loader}><span>Please wait...</span></div>
+        }
+      </div>
+
+      <div style={{
+        display: step === 4 ? 'block' : 'none'
+      }} className={classes.panel}>
+        <label><strong>Step 4</strong> Final Output</label>
+        <div className={classes.blockPanel}>
+        {
+          rgbBlocks.length > 0 && rgbBlocks.map((item, index) => {
+            const color = `rgb(${item.r}, ${item.g}, ${item.b})`
+            const imageIndex = normalBlocks.length > 0 ? normalBlocks[index].index : 0
+            return (
+              <div key={index} style={{
+                backgroundColor: color,
+                backgroundImage: `url("./image${imageIndex}.jpeg")`,
+                backgroundSize: 'cover',
+                backgroundBlendMode: 'overlay',
+                width: BLOCK_SIZE,
+                height: BLOCK_SIZE,
+              }} className={classes.block} />
+            )
+          })
+        }
+        </div>
+        <div className={classes.action}>
+          <button onClick={handlePrevious} className={classes.button}>&#8672; Previous</button>
+        </div>
+        {
+          loading &&
+          <div className={classes.loader}><span>Please wait...</span></div>
+        }
+      </div>
+
       <input 
       ref={fileRef} 
       type="file" 
       accept="image/*" 
-      onChange={handleChangeFile}
+      onChange={handleFile}
       />
     </div>
   )
+
 }
 
 export default App
