@@ -20,7 +20,7 @@ Easy enough?
 
 First, we load the image file into our `img` component.
 The `img` component has `object-fit` set to `cover` so that any image will fit nicely.
-You can resize the image programmatically on your own if you want.
+Before we set it to the component, we needed to resize the image.
 
 ```javascript
 const output_size = 256; // square image
