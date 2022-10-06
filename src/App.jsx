@@ -197,7 +197,9 @@ function App() {
 
   const handleOutput = () => {
 
-    nextStep()
+    setLoading(true)
+
+    setTimeout(nextStep, 100)
 
   }
 
