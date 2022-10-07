@@ -82,11 +82,17 @@ At this point, if we apply the `dominant RGB color` on each block, the resulting
 ![Dominant RGB color](./docs/image1.jpeg "Dominant RGB color")
 
 Next, we get the equivalent `grayscale` value for each `dominant RGB color`.
-Also note that the way you get the `grayscale` value will affect output quality.
-Currently, I am only using a simple average to get the `grayscale`.
+The `grayscale` value will affect the output quality so I added a way to select different kinds of `grayscale` function that you can use.
 
 ```javascript
-const gs = (color.red + color.green + color.blue) / 3;
+// Average
+const gs_average = (red + green + blue) / 3;
+
+// Lightness
+const gs_lightness = (Math.max(red, green, blue) + Math.min(red, green, blue)) / 2;
+
+// Luminosity
+const gs_luminosity = 0.21 * red + 0.72 * green + 0.07 * blue;
 ```
 
 The resulting output is like below:
