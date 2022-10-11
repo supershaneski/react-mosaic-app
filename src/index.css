@@ -16,7 +16,7 @@
 }
 body {
   margin: 0;
-  zoom: 0.5;
+  zoom: 0.75;
 }
 @media (prefers-color-scheme: light) {
   :root {
