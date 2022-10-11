@@ -124,6 +124,10 @@ Finally, we put all of it together, we apply the `dominant RGB color` for each b
 
 ***Note: Stock photos used as sample images taken from [Unsplash](https://unsplash.com/photos/7YVZYZeITc8)*** 
 
+## Using Color Palette
+
+From [this](https://dev.to/producthackers/creating-a-color-palette-with-javascript-44ip) article, I was able to also get the color palette of the image. Using this data, I was able to reduce the steps to three. I sorted the colors by `luminance` and use it to set the image mosaic.
+
 # Moving Forward
 
 * As of this time, the images used for the mosaic are located in `public` folder.
