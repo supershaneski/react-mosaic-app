@@ -126,7 +126,7 @@ Finally, we put all of it together, we apply the `dominant RGB color` for each b
 
 ## Using Color Palette
 
-From [this](https://dev.to/producthackers/creating-a-color-palette-with-javascript-44ip) article, I was able to also get the color palette of the image. It gave me 16 different colors. I then sorted the colors by `luminance` and use it to set the image mosaic.
+From [this](https://dev.to/producthackers/creating-a-color-palette-with-javascript-44ip) article, I was able to also get the color palette (including several useful functions) of the image. It gave me 16 different colors. I then sorted the colors by `luminance` and use it to set the image mosaic.
 
 ```javascript
 const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height)
